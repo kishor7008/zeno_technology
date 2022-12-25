@@ -1,96 +1,143 @@
-import React, { useState } from "react"
-import "./App.css"
-import { useRef } from "react"
+import { useEffect, useState, useRef } from "react";
+export default function Four() {
+	const [drag, setDrag] = useState()
+	const [todos, setTodos] = useState(() => {
+		const savedTodos = localStorage.getItem("todos");
+		if (savedTodos) {
+			return JSON.parse(savedTodos);
+		} else {
+			return [];
+		}
+	});
+	const [todo, setTodo] = useState("");
+	const [isEditing, setIsEditing] = useState(false);
+	const [currentTodo, setCurrentTodo] = useState({});
+	const dragItem = useRef()
+	const dragOverItem = useRef()
+	const handleSort = () => {
 
-function Four() {
-    const [drag, setDrag] = useState()
-    const [fruitItems, setFruitItems] = React.useState([
-        "FIFA",
-        "India",
-        "Hockey",
-    ])
-    const [newFruitItem, setNewFruitItem] = useState("")
-    const dragItem = useRef()
-    const dragOverItem = useRef()
-    const handleSort = () => {
-        let _fruitItems = [...fruitItems]
-        const draggedItemContent = _fruitItems.splice(dragItem.current, 1)[0]
-        console.log(draggedItemContent)
-        setDrag(draggedItemContent)
-        _fruitItems.splice(dragOverItem.current, 0, draggedItemContent)
+		let itemList = [...todos]
 
-        dragItem.current = null
-        dragOverItem.current = null
-        setFruitItems(_fruitItems)
-    }
+		const draggedItemContent = itemList.splice(dragItem.current, 1)[0]
+		console.log(draggedItemContent)
+		setDrag(draggedItemContent)
+		itemList.splice(dragOverItem.current, 0, draggedItemContent)
 
-    const handleNameChange = (e) => {
-        setNewFruitItem(e.target.value)
-        setNewFruitItem("")
-     
-    }
-    const handleAddItem = () => {
-        if (fruitItems.length == 8) {
-            return;
-        }
-        const _fruitItems = [...fruitItems]
-        _fruitItems.push(newFruitItem)
-        setFruitItems(_fruitItems)
-        setNewFruitItem("")
+		dragItem.current = null
+		dragOverItem.current = null
+		setTodos(itemList)
+	}
+	useEffect(() => {
+		localStorage.setItem("todos", JSON.stringify(todos));
+	}, [todos]);
 
-        
-    }
-    const deleteId = (id) => {
+	function handleInputChange(e) {
+		setTodo(e.target.value);
+	}
+	function handleEditInputChange(e) {
+		setCurrentTodo({ ...currentTodo, text: e.target.value });
+		console.log(currentTodo);
+	}
 
-        const fruit = fruitItems;
-        const g = fruit.splice(id, 1);
-        setFruitItems(g)
-    }
-    return (
-        <div className="app">
-            <h2>BLACK</h2>
-            <div className="input-group ">
-                <input
-                    type="text"
-                    name="fruitName"
-                  
-                    onChange={handleNameChange}
-                    value=
-                    {newFruitItem}
-                />
-                <button className="btn" onClick={handleAddItem}>
-                    Add 
-                </button>
-            </div>
+	function handleFormSubmit(e) {
+		e.preventDefault();
 
-            <div className="list-container">
-                {fruitItems.map((item, index) => (
-                    <>
-                        <div
-                            key={index}
-                            className="list-item"
-                            draggable
-                            onDragStart={(e) => (dragItem.current = index)}
-                            onDragEnter={(e) => (dragOverItem.current = index)}
-                            onDragEnd={handleSort}
-                            onDragOver={(e) => e.preventDefault()}>
-                            <div className="card text-white bg-dark mb-3" style={{ maxWidth: "10rem" }}>
-                                <div className="card-body d-flex justify-content-between">
+		if (todo !== "") {
+			setTodos([
+				...todos,
+				{
+					id: todos.length + 1,
+					text: todo.trim()
+				}
+			]);
+		}
 
-                                    <p className="card-text">{item}</p>
-                                    <p ><i className="fa fa-times" aria-hidden="true" onClick={() => {
-                                           console.log('dwd')
-                                    }}></i></p>
-                                </div>
-                            </div>
+		setTodo("");
+	}
 
-                        </div>
-                    </>
-                ))}
-            </div>
+	function handleEditFormSubmit(e) {
+		e.preventDefault();
 
-        </div>
-    )
+		handleUpdateTodo(currentTodo.id, currentTodo);
+	}
+
+	function handleDeleteClick(id) {
+		const removeItem = todos.filter((todo) => {
+			return todo.id !== id;
+		});
+		setTodos(removeItem);
+	}
+	function handleUpdateTodo(id, updatedTodo) {
+		const updatedItem = todos.map((todo) => {
+			return todo.id === id ? updatedTodo : todo;
+		}); setIsEditing(false);
+		setTodos(updatedItem);
+	}
+
+	function handleEditClick(todo) {
+		setIsEditing(true);
+		setCurrentTodo({ ...todo });
+	}
+
+
+
+
+
+
+	return (
+		<div className="App">
+			{isEditing ? (
+				<form onSubmit={handleEditFormSubmit}>
+					<h2>Edit Todo</h2>
+					
+					<input
+						name="editTodo"
+						type="text"
+						placeholder="Edit todo"
+						value={currentTodo.text}
+						onChange={handleEditInputChange}
+					/>
+					<button type="submit">Update</button>
+					<button onClick={() => setIsEditing(false)}>Cancel</button>
+				</form>
+			) : (
+				<form onSubmit={handleFormSubmit}>
+					<div><button className="bg-dark text-white ">BLACK</button></div>
+
+					
+					<input
+						name="todo"
+						type="text"
+						// placeholder="Create a new todo"
+						value={todo}
+						onChange={handleInputChange}
+                        style={{width:"150px"}}
+					/>
+					<button type="submit">Add</button>
+				</form>
+			)}
+
+			<ul className="todo-list">
+				{todos.map((todo, index) => (
+					<>
+					
+					<div class="card text-white bg-dark mb-3 d-flex" style={{maxWidth: "10rem"}}>
+                <div class="card-body d-flex justify-content-between">
+              <p class="card-text" draggable
+							onDragStart={(e) => (dragItem.current = index)}
+							onDragEnter={(e) => (dragOverItem.current = index)}
+							onDragEnd={handleSort}
+							onDragOver={(e) => e.preventDefault()}>{todo.text}</p>
+							<div class="d-flex ">
+					<p onClick={() => handleEditClick(todo)} style={{marginRight:"20px"}}><i class="fas fa-edit"></i></p>
+						<p onClick={() => handleDeleteClick(todo.id)}><i class="fa-solid fa-xmark"></i></p>
+						</div>
+					
+               </div>
+</div>
+					</>
+				))}
+			</ul>
+		</div>
+	);
 }
-
-export default Four
